@@ -1,0 +1,24 @@
+{
+    "Statement": [
+        {
+            "Action": [
+            "s3:GetObject"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:s3:::maksym-bucket-v1/*",
+            "Principal": "*"
+        },
+        {
+            "Sid": "IPAllow",
+            "Action": "s3:*",
+            "Effect": "Deny",
+            "Resource": "arn:aws:s3:::maksym-bucket-v1/*",
+            "Condition": {
+            "IpAddress": {
+                "aws:SourceIp": "50.31.252.0/24"
+            }
+            },
+            "Principal": "*"
+        }
+    ]
+}
