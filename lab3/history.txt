@@ -1,0 +1,39 @@
+aws ec2 create-vpc --cidr-block 10.0.0.0/16
+
+aws ec2 create-internet-gateway
+
+aws ec2 attach-internet-gateway --vpc-id vpc-0aa2420fefe08461b --internet-gateway-id igw-0013c505c61ad5b80
+
+aws ec2 create-subnet --cidr-block 10.0.1.0/24 --vpc-id vpc-0aa2420fefe08461b
+
+aws ec2 modify-subnet-attribute --subnet-id subnet-0e6b775e14eb8870a --map-public-ip-on-launch
+
+aws ec2 create-route-table --vpc-id vpc-0aa2420fefe08461b
+
+aws ec2 create-route --destination-cidr-block 0.0.0.0/0 --gateway-id igw-0013c505c61ad5b80 --route-table-id rtb-0ad7793a0e27821fb
+
+aws ec2 associate-route-table --route-table-id rtb-0ad7793a0e27821fb --subnet-id subnet-0e6b775e14eb8870a
+
+aws ec2 create-key-pair --key-name Server --query 'KeyMaterial' --output text > Server.pem
+
+aws ec2 wait key-pair-exists --key-names Server
+
+aws ec2 describe-key-pairs  --key-names Server
+
+aws ec2 create-security-group --group-name Access --description "1-st step security group for SSH access" --vpc-id vpc-0aa2420fefe08461b
+
+aws ec2 describe-security-groups --filters Name=description,Values="1-st step security group for SSH access"
+
+aws ec2 authorize-security-group-ingress --group-id sg-044f6ec10fa925e2b --protocol tcp --port 22 --cidr 0.0.0.0/0
+
+aws ec2 authorize-security-group-ingress --group-id sg-044f6ec10fa925e2b --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+aws ec2 authorize-security-group-ingress --group-id sg-044f6ec10fa925e2b --protocol tcp --port 443 --cidr 0.0.0.0/0
+
+aws ec2 run-instances --image-id ami-053adf54573f777cf --count 1 --instance-type t2.micro --key-name Server --user-data file://data.sh --security-group-ids sg-044f6ec10fa925e2b --subnet-id subnet-0e6b775e14eb8870a
+
+aws ec2 wait instance-exists --instance-ids i-0685fbba59c1cf443
+
+aws ec2 describe-instances --instance-ids i-0685fbba59c1cf443
+
+doskey /HISTORY > history.txt
