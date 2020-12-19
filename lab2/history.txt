@@ -1,39 +1,41 @@
 aws ec2 create-vpc --cidr-block 10.0.0.0/16
 
-aws ec2 create-tags --resources vpc-0c39d4f21c45a5f49 --tags Key=Name,Value=MB2-VPC
+aws ec2 create-tags --resources vpc-084f92f52f379a018 --tags Key=Name,Value=MB2VPC
 
-aws ec2 create-subnet --vpc-id vpc-0c39d4f21c45a5f49 --cidr-block 10.0.1.0/24
+aws ec2 create-subnet --vpc-id vpc-084f92f52f379a018 --cidr-block 10.0.1.0/24
 
-aws ec2 create-subnet --vpc-id vpc-0c39d4f21c45a5f49 --cidr-block 10.0.0.0/24
+aws ec2 create-subnet --vpc-id vpc-084f92f52f379a018 --cidr-block 10.0.0.0/24
 
 aws ec2 create-internet-gateway
 
-aws ec2 attach-internet-gateway --vpc-id vpc-0c39d4f21c45a5f49 --internet-gateway-id igw-0c93a158ab7db1b82
+aws ec2 attach-internet-gateway --vpc-id vpc-084f92f52f379a018 --internet-gateway-id igw-05d2788c023684f7a
 
-aws ec2 create-tags --resources igw-0c93a158ab7db1b82 --tags Key=Name,Value=MB2-IGW
+aws ec2 create-tags --resources igw-05d2788c023684f7a --tags Key=Name,Value=MB2IGW
 
-aws ec2 create-route-table --vpc-id vpc-0c39d4f21c45a5f49
+aws ec2 create-route-table --vpc-id vpc-084f92f52f379a018
 
-aws ec2 create-tags --resources rtb-0e27d45bb4a17c3ef --tags Key=Name,Value=MB2-RT
+aws ec2 create-tags --resources rtb-07efcc6ee57dd7322 --tags Key=Name,Value=MB2RT
 
-aws ec2 describe-route-tables --route-table-id rtb-0e27d45bb4a17c3ef
+aws ec2 describe-route-tables --route-table-id rtb-07efcc6ee57dd7322
 
-aws ec2 create-route --route-table-id rtb-0e27d45bb4a17c3ef --destination-cidr-block 0.0.0.0/0 --gateway-id igw-0c93a158ab7db1b82
+aws ec2 create-route --route-table-id rtb-07efcc6ee57dd7322 --destination-cidr-block 0.0.0.0/0 --gateway-id igw-05d2788c023684f7a
 
-aws ec2 associate-route-table --subnet-id subnet-0d925bd926fc2b7c6 --route-table-id rtb-0e27d45bb4a17c3ef
+aws ec2 associate-route-table --subnet-id subnet-08c7389e29c63e81c --route-table-id rtb-07efcc6ee57dd7322
 
-aws ec2 modify-subnet-attribute --subnet-id subnet-0d925bd926fc2b7c6 --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id subnet-08c7389e29c63e81c --map-public-ip-on-launch
 
-aws ec2 create-key-pair --key-name MB2KeyPair --query 'MB2KeyMaterial' --output text > MB2KeyPair
+aws ec2 create-security-group --group-name MB2-SG --description "MB2 Group for SSH" --vpc-id vpc-084f92f52f379a018
 
-aws ec2 create-security-group --group-name MB2SG --description "MB2 Group for SSH access" --vpc-id vpc-0c39d4f21c45a5f49
+aws ec2 authorize-security-group-ingress --group-id sg-0d9dfabb6251f39a4 --protocol tcp --port 22 --cidr 0.0.0.0/0
 
-aws ec2 authorize-security-group-ingress --group-id sg-0e13f5e43bfb02da5 --protocol tcp --port 22 --cidr 0.0.0.0/0
+aws ec2 create-key-pair --key-name 2KeyMaterial --query 'KeyMaterial' --output text > 2KeyMaterial
 
-aws ec2 run-instances --image-id ami-09558250a3419e7d0 --count 1 --instance-type t2.micro --key-name MB2KeyPair --security-group-ids sg-0e13f5e43bfb02da5 --subnet-id subnet-0d925bd926fc2b7c6
+cat MB2Key
 
-aws ec2 describe-instances --instance-id i-05d9de51c87571dce
+chmod 400 2KeyMaterial
 
-chmod 400 MB2KeyPair
+aws ec2 run-instances --image-id ami-09558250a3419e7d0 --count 1 --instance-type t2.micro --key-name 2KeyMaterial --security-group-ids sg-0d9dfabb6251f39a4 --subnet-id subnet-08c7389e29c63e81c
 
-ssh -i MB2KeyPair ec2-user@3.21.44.112
+aws ec2 describe-instances --instance-id i-0dd066e551129464c
+
+ssh -i 2KeyMaterial ec2-user@3.19.79.153
