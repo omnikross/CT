@@ -1,39 +1,45 @@
 aws ec2 create-vpc --cidr-block 10.0.0.0/16
 
+aws ec2 create-tags --resources vpc-0bb3e211b35a47aa5 --tags Key=Name,Value=MB3-VPC
+
 aws ec2 create-internet-gateway
 
-aws ec2 attach-internet-gateway --vpc-id vpc-0aa2420fefe08461b --internet-gateway-id igw-0013c505c61ad5b80
+aws ec2 attach-internet-gateway --vpc-id vpc-0bb3e211b35a47aa5 --internet-gateway-id igw-0a5954dbf64c8e014
 
-aws ec2 create-subnet --cidr-block 10.0.1.0/24 --vpc-id vpc-0aa2420fefe08461b
+aws ec2 create-tags --resources igw-0a5954dbf64c8e014 --tags Key=Name,Value=MB3-IGW
 
-aws ec2 modify-subnet-attribute --subnet-id subnet-0e6b775e14eb8870a --map-public-ip-on-launch
+aws ec2 create-subnet --cidr-block 10.0.1.0/24 --vpc-id vpc-0bb3e211b35a47aa5
 
-aws ec2 create-route-table --vpc-id vpc-0aa2420fefe08461b
+aws ec2 modify-subnet-attribute --subnet-id subnet-0c3aa2aed966b657e --map-public-ip-on-launch
 
-aws ec2 create-route --destination-cidr-block 0.0.0.0/0 --gateway-id igw-0013c505c61ad5b80 --route-table-id rtb-0ad7793a0e27821fb
+aws ec2 create-tags --resources subnet-0c3aa2aed966b657e --tags Key=Name,Value=MB3-Subnet
 
-aws ec2 associate-route-table --route-table-id rtb-0ad7793a0e27821fb --subnet-id subnet-0e6b775e14eb8870a
+aws ec2 create-route-table --vpc-id vpc-0bb3e211b35a47aa5
 
-aws ec2 create-key-pair --key-name Server --query 'KeyMaterial' --output text > Server.pem
+aws ec2 create-tags --resources rtb-061b85449b85d0768 --tags Key=Name,Value=MB-RT
 
-aws ec2 wait key-pair-exists --key-names Server
+aws ec2 create-route --destination-cidr-block 0.0.0.0/0 --gateway-id igw-0a5954dbf64c8e014 --route-table-id rtb-061b85449b85d0768
 
-aws ec2 describe-key-pairs  --key-names Server
+aws ec2 associate-route-table --route-table-id rtb-061b85449b85d0768 --subnet-id subnet-0c3aa2aed966b657e
 
-aws ec2 create-security-group --group-name Access --description "1-st step security group for SSH access" --vpc-id vpc-0aa2420fefe08461b
+aws ec2 create-key-pair --key-name MB3Key_query --query 'KeyMaterial' --output text > MB3Key_query
 
-aws ec2 describe-security-groups --filters Name=description,Values="1-st step security group for SSH access"
+aws ec2 create-security-group --group-name MB3SG --description "Security group BM3" --vpc-id vpc-0bb3e211b35a47aa5
 
-aws ec2 authorize-security-group-ingress --group-id sg-044f6ec10fa925e2b --protocol tcp --port 22 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id sg-0fc8f7fa51007cca1 --protocol tcp --port 22 --cidr 0.0.0.0/0
 
-aws ec2 authorize-security-group-ingress --group-id sg-044f6ec10fa925e2b --protocol tcp --port 80 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id sg-0fc8f7fa51007cca1 --protocol tcp --port 80 --cidr 0.0.0.0/0
 
-aws ec2 authorize-security-group-ingress --group-id sg-044f6ec10fa925e2b --protocol tcp --port 443 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id sg-0fc8f7fa51007cca1 --protocol tcp --port 443 --cidr 0.0.0.0/0
 
-aws ec2 run-instances --image-id ami-053adf54573f777cf --count 1 --instance-type t2.micro --key-name Server --user-data file://data.sh --security-group-ids sg-044f6ec10fa925e2b --subnet-id subnet-0e6b775e14eb8870a
+aws ec2 run-instances --image-id ami-09558250a3419e7d0 --count 1 --instance-type t2.micro --key-name MB3Key_query --security-group-ids sg-0fc8f7fa51007cca1 --subnet-id subnet-0c3aa2aed966b657e --user-data file://script.sh
 
-aws ec2 wait instance-exists --instance-ids i-0685fbba59c1cf443
+aws ec2 create-tags --resources i-0c261a24cabb849f7 --tags Key=Name,Value=MB3-WebServer
 
-aws ec2 describe-instances --instance-ids i-0685fbba59c1cf443
+aws ec2 create-image --instance-id i-0c261a24cabb849f7 --name "Security group MB3" --description "Apache"
 
-doskey /HISTORY > history.txt
+chmod 400 MB3Key_query
+
+aws ec2 describe-instances --instance-ids i-0c261a24cabb849f7
+
+ssh -i MB3Key_query ec2-user@3.140.194.153
